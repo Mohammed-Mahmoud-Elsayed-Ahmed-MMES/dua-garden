@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Dua Garden — Discover, share and preserve authentic Islamic duas and dhikr." />
+  <title>Dua Garden — حديقة الأدعية</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Third-party libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- App stylesheet -->
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-text">
+        <span class="logo-title">Dua Garden</span>
+        <span class="logo-subtitle">حديقة الأدعية</span>
+      </div>
+    </a>
+    <div class="header-actions">
+      <div class="realtime-dot" id="realtimeStatus">Live</div>
+      <button class="btn btn-ghost btn-sm" id="authBtn" onclick="openAuthModal()">Sign In</button>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+  <h1>A Garden of Supplications</h1>
+  <p>Discover, share, and preserve authentic Islamic duas and dhikr</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN LAYOUT
+══════════════════════════════════════════════════════════ -->
+<div class="main-container">
+  <div class="layout">
+
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+      <div class="card">
+        <div class="card-header">
+          <div class="icon">📂</div>
+          <h3>Categories</h3>
+        </div>
+        <div class="category-list" id="categoryList">
+          <button class="category-item active" onclick="selectCategory('all',this)">
+            <span class="cat-icon">🌟</span>
+            <span class="cat-name">All Duas</span>
+          </button>
+        </div>
+        <div id="favTabWrapper" style="display:none">
+          <button class="favorites-tab" id="favTab" onclick="selectCategory('__favorites__',this)">⭐ My Favorites</button>
+        </div>
+      </div>
+
+      <div class="card auth-card">
+        <div class="card-header">
+          <div class="icon">👤</div>
+          <h3>Account</h3>
+        </div>
+        <div class="auth-form" id="authSidebarContent">
+          <p style="font-size:13px;color:var(--ink-faint);margin-bottom:13px;line-height:1.5">Sign in to like and save duas.</p>
+          <button class="btn btn-green btn-full" onclick="openAuthModal()">Sign In / Register</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="content-area">
+
+      <!-- Add Dua -->
+      <div class="add-dua-section">
+        <button class="add-dua-toggle" id="addDuaToggle" onclick="toggleAddForm()">
+          <span style="font-size:19px">＋</span>
+          <span>Share a Dua with the Community</span>
+        </button>
+
+        <div class="add-dua-form" id="addDuaForm">
+          <h3 class="form-section-title">Add a New Dua</h3>
+
+          <div class="ai-filling hidden" id="aiFillingBar">
+            <div class="ai-spinner"></div>
+            <span id="aiFillingMsg">Analyzing dua with AI…</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Arabic Text <span style="color:var(--error)">*</span></label>
+            <textarea class="form-input form-textarea form-textarea-ar" id="inputTextAr"
+              placeholder="اكتب الدعاء هنا..." oninput="onArabicInput()"></textarea>
+            <div class="form-hint">Required. After you pause typing, AI will auto-fill the fields below.</div>
+            <div class="form-hint error-msg hidden" id="arabicError">Please enter the Arabic text.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Category <span style="color:var(--error)">*</span></label>
+            <select class="form-input form-select" id="inputCategory"></select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              Transliteration <span class="optional">(auto-filled)</span>
+              <span class="ai-badge hidden" id="translitBadge">✦ AI</span>
+            </label>
+            <textarea class="form-input form-textarea" id="inputTranslit"
+              placeholder="e.g. Rabbana atina fid-dunya…" rows="2"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              English Translation <span class="optional">(auto-filled)</span>
+              <span class="ai-badge hidden" id="translationBadge">✦ AI</span>
+            </label>
+            <textarea class="form-input form-textarea" id="inputTranslation"
+              placeholder="Meaning in English…" rows="3"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">
+                Source <span class="optional">(optional)</span>
+                <span class="ai-badge hidden" id="sourceBadge">✦ AI</span>
+              </label>
+              <input type="text" class="form-input" id="inputSource" placeholder="e.g. Quran, Bukhari…" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                Reference <span class="optional">(optional)</span>
+                <span class="ai-badge hidden" id="referenceBadge">✦ AI</span>
+              </label>
+              <input type="text" class="form-input" id="inputReference" placeholder="e.g. Al-Baqarah 2:201" />
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
+            <button class="btn btn-gold" onclick="submitDua()" id="submitDuaBtn">🌿 Submit Dua</button>
+            <button class="btn btn-ghost btn-green" onclick="toggleAddForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Header -->
+      <div class="content-header">
+        <h2 class="content-title" id="pageTitle">All Duas</h2>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="sort-controls">
+            <button class="sort-btn active" onclick="setSort('likes',this)">❤ Most Liked</button>
+            <button class="sort-btn" onclick="setSort('newest',this)">✦ Newest</button>
+          </div>
+          <button class="btn-pdf" id="downloadPdfBtn" onclick="downloadPDF()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Pinned Favorites Strip -->
+      <div class="favorites-section hidden" id="favoritesSection">
+        <div class="favorites-header">
+          <span>⭐</span>
+          <h3>My Favorites</h3>
+          <span class="fav-count" id="favCount">0</span>
+        </div>
+        <div id="favoritesList" class="duas-list" style="margin-bottom:24px"></div>
+        <div style="height:1px;background:var(--parchment);margin-bottom:22px"></div>
+        <h2 class="content-title" style="margin-bottom:16px">All Duas</h2>
+      </div>
+
+      <!-- Duas List -->
+      <div id="duasList" class="duas-list">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading duas…</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MOBILE / TABLET — Floating Button + Drawer
+══════════════════════════════════════════════════════════ -->
+
+<button class="cat-fab" onclick="openDrawer()" id="catFab">
+  <span class="cat-fab-icon">📂</span>
+  <span id="catFabLabel">Categories</span>
+</button>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<div class="cat-drawer" id="catDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title">📂 Categories</div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="category-list" id="categoryListDrawer">
+        <button class="category-item active" onclick="selectCategory('all',this,true)">
+          <span class="cat-icon">🌟</span>
+          <span class="cat-name">All Duas</span>
+        </button>
+      </div>
+      <div id="favTabWrapperDrawer" style="display:none">
+        <button class="favorites-tab" id="favTabDrawer" onclick="selectCategory('__favorites__',this,true)">⭐ My Favorites</button>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Account</div>
+      <div class="auth-form" id="authDrawerContent" style="padding:4px 8px 8px">
+        <p style="font-size:13px;color:var(--ink-faint);margin-bottom:13px;line-height:1.5">Sign in to like and save duas.</p>
+        <button class="btn btn-green btn-full" onclick="openAuthModal()">Sign In / Register</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     AUTH MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-icon">🌿</span>
+      <h2 class="modal-title">Welcome</h2>
+      <p class="modal-sub">Join the community of believers</p>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchAuthTab('signin',this)">Sign In</button>
+      <button class="modal-tab" onclick="switchAuthTab('register',this)">Register</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" id="modalEmail" placeholder="you@example.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="modalPassword" placeholder="••••••••" />
+    </div>
+    <button class="btn btn-gold btn-full" style="margin-top:10px" id="authSubmitBtn" onclick="handleAuth()">Sign In</button>
+    <div class="divider-or">or</div>
+    <button class="btn btn-ghost btn-full" style="color:var(--ink-muted);border-color:var(--parchment)" onclick="closeAuthModal()">Continue as Guest</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DELETE CONFIRM MODAL
+══════════════════════════════════════════════════════════ -->
+<div id="confirmModal" class="confirm-modal" style="display:none">
+  <div class="confirm-box">
+    <h3>Delete this Dua?</h3>
+    <p>This cannot be undone. Your dua will be permanently removed.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn" style="background:#c0392b;color:white" onclick="doDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DUPLICATE WARNING MODAL
+══════════════════════════════════════════════════════════ -->
+<div id="duplicateModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
+  <div style="background:white;border-radius:20px;padding:28px;width:100%;max-width:480px;box-shadow:0 8px 40px rgba(0,0,0,0.2);animation:modalIn .3s cubic-bezier(0.4,0,0.2,1)">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:38px;margin-bottom:8px">🌿</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;color:var(--deep-green);margin-bottom:6px">This Dua Already Exists</h3>
+      <p style="font-size:13px;color:var(--ink-faint);line-height:1.5">JazakAllahu Khayran for wanting to share — but this dua is already in our garden!</p>
+    </div>
+    <div id="duplicateCardPreview" style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:20px;border:1px solid rgba(200,169,110,0.2)"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="closeDuplicateModal()">Got it, I'll skip this one</button>
+      <button class="btn btn-ghost" onclick="submitDuaForce()" style="color:var(--ink-muted)">Add Anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOAST CONTAINER
+══════════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     APPLICATION SCRIPTS  (order matters)
+══════════════════════════════════════════════════════════ -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/state.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/drawer.js"></script>
+<script src="assets/js/categories.js"></script>
+<script src="assets/js/duplicate.js"></script>
+<script src="assets/js/ai.js"></script>
+<script src="assets/js/duas.js"></script>
+<script src="assets/js/pdf.js"></script>
+<script src="assets/js/app.js"></script>
+
+</body>
+</html>
