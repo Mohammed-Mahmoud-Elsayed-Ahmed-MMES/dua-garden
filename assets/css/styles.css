@@ -121,7 +121,7 @@ body::before {
   overflow: hidden;
 }
 .hero::before {
-  content: '\FFDFE30';
+  content: '﷽';
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
   font-size: 240px; opacity: .04; color: var(--gold);
   pointer-events: none; font-family: 'Amiri', serif; line-height: 1;
